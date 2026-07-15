@@ -1,0 +1,74 @@
+---
+title: "01_metagenome_assembly"
+author: "Kaushik Surej"
+date: "2026-07-10"
+output: html_document
+---
+
+# Analyzing the distribution of the reads that are present 
+```bash
+zcat raw_data/raw_reads.fastq.gz \
+```
+## The code that has been written within the first bash chuck suggests that the data which has been loaded gets unzipped which then gets sent into the standard output
+
+### This particular code is a pipe and it sends the output from the previous command as input to the next command
+
+```{r}
+library(tidyverse)
+
+rl_data <- read_tsv("read_lengths.txt",col_names = c("id","length"), show_col_types = FALSE)
+
+ggplot(rl_data, aes(x=length/1000)) + 
+  geom_histogram(binwidth = 2) +
+  xlab("Read Length Kb") + ylab("Number of Reads")
+```
+# Calculating read N50: One of the most commonly used statistical analysis tool for summarising genome assemblies and read length distributions is N50. The  reason as to why this statistic is preferred is because it is unaffected by having a large number of tiny reads, placing a greater emphasis on the longer reads within the data- Fig 1
+```{r}
+total_len <- sum(rl_data$length)
+
+rl_data %>% 
+  arrange(desc(length)) %>% 
+  mutate(cumsum = cumsum(length)) %>% 
+  filter(cumsum>total_len/2) %>% 
+  head(n=1)
+```
+
+# Answering a few questions
+## 1) Size of the largest contig= 4681059, Coverage of the largest contig= 11
+## 2) The contig that corresponds to the genome of the mock species within the community is contig 12cd
+
+tail -f slurm-XXX.out
+
+```{r}
+gc <- read_tsv("assembly_check/assembly.gc.tsv",col_names = c("#seq_name","length","GC"))
+info <- read_tsv("flye/mock/assembly_info.txt") 
+
+gc_info <- info %>% 
+  left_join(gc)
+
+gc_info %>% 
+  ggplot(aes(x=GC)) + geom_histogram() + ylab("Number of contigs")
+```
+## The gc.awk text file helped create a histogram with the relevant GC content values for assembles contigs in a flye assembly of the mock community data set- Fig 2
+
+```{r}
+gc_info %>% 
+  filter(GC<0.8) %>% 
+  filter(cov.<25) %>% 
+  ggplot(aes(x=GC,y=cov.)) + geom_point(aes(size=length)) + ylab("Coverage depth")
+```
+## GC and coverage content of the assembled contigs within the mock community assembly- Fig 3
+
+```{r}
+install.packages("ggrepel")
+library(ggrepel)
+```
+```{r}
+
+library(ggrepel)
+gc_info %>% 
+  filter(GC<0.8) %>% 
+  filter(cov.<25) %>% 
+  ggplot(aes(x=GC,y=cov.)) + geom_point(aes(size=length)) + geom_label_repel(aes(label=`#seq_name`))
+```
+## Covergae and GC content of assembled contigs within the mock community- Fig 4

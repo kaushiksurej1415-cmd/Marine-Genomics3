@@ -33,9 +33,6 @@ rl_data %>%
   head(n=1)
 ```
 
-# Answering a few questions
-## 1) Size of the largest contig= 4681059, Coverage of the largest contig= 11
-## 2) The contig that corresponds to the genome of the mock species within the community is contig 12cd
 
 tail -f slurm-XXX.out
 
